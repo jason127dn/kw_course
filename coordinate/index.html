@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Aircraft Principal Axes Visualization</title>
+    <style>
+        body { margin: 0; }
+        canvas { display: block; }
+        #controls { position: absolute; bottom: 20px; left: 20px; }
+    </style>
+</head>
+<body>
+    <div id="controls">
+        <label>Roll (deg): <input type="range" id="roll" min="-180" max="180" value="0"></label><br>
+        <label>Pitch (deg): <input type="range" id="pitch" min="-90" max="90" value="0"></label><br>
+        <label>Yaw (deg): <input type="range" id="yaw" min="-180" max="180" value="0"></label>
+    </div>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/dat-gui/0.7.7/dat.gui.min.js"></script>
+    <script>
+        let camera, scene, renderer, axesHelper, aircraft;
+
+        function init() {
+            // Set up the camera
+            camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+            camera.position.z = 4;
+
+            // Set up the scene
+            scene = new THREE.Scene();
+
+            // Add the aircraft axes
+            aircraft = new THREE.AxesHelper(1);
+            scene.add(aircraft);
+
+            // Set up the renderer
+            renderer = new THREE.WebGLRenderer();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            document.body.appendChild(renderer.domElement);
+
+            // Update the axes when the sliders are moved
+            document.getElementById('roll').addEventListener('input', updateAxes);
+            document.getElementById('pitch').addEventListener('input', updateAxes);
+            document.getElementById('yaw').addEventListener('input', updateAxes);
+
+            // Render the scene
+            animate();
+        }
+
+        function animate() {
+            requestAnimationFrame(animate);
+            renderer.render(scene, camera);
+        }
+
+        function updateAxes() {
+            // Get the roll, pitch, and yaw from the sliders
+            const roll = document.getElementById('roll').value;
+            const pitch = document.getElementById('pitch').value;
+            const yaw = document.getElementById('yaw').value;
+
+            // Update the aircraft axes based on the roll, pitch, and yaw
+            const euler = new THREE.Euler(THREE.MathUtils.degToRad(roll), THREE.MathUtils.degToRad(pitch), THREE.MathUtils.degToRad(yaw), 'ZYX');
+            aircraft.setRotationFromEuler(euler);
+        }
+
+        // Initialize the visualization
+        init();
+    </script>
+</body>
+</html>
+

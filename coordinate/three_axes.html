@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Aircraft Principal Axes Visualization</title>
+    <style>
+        body { margin: 0; }
+        canvas { display: block; }
+        #controls { position: absolute; bottom: 20px; left: 20px; }
+    </style>
+</head>
+<body>
+    <div id="controls">
+        <p>Rotation A to B:</p>
+        <label>Roll (deg): <input type="range" id="roll_AB" min="-180" max="180" value="0"></label><br>
+        <label>Pitch (deg): <input type="range" id="pitch_AB" min="-90" max="90" value="0"></label><br>
+        <label>Yaw (deg): <input type="range" id="yaw_AB" min="-180" max="180" value="0"></label><br>
+        <p>Rotation B to C:</p>
+        <label>Roll (deg): <input type="range" id="roll_BC" min="-180" max="180" value="0"></label><br>
+        <label>Pitch (deg): <input type="range" id="pitch_BC" min="-90" max="90" value="0"></label><br>
+        <label>Yaw (deg): <input type="range" id="yaw_BC" min="-180" max="180" value="0"></label><br>
+        <p id="angleValues_AB"></p>
+        <p id="angleValues_BC"></p>
+        <p>Rotation Matrix A to B:</p>
+        <pre id="rotationMatrix_AB"></pre>
+        <p>Rotation Matrix B to C:</p>
+        <pre id="rotationMatrix_BC"></pre>
+    </div>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/dat-gui/0.7.7/dat.gui.min.js"></script>
+    <script>
+        let camera, scene, renderer, axesA, axesB, axesC, orbitControls;
+
+        function init() {
+            // Set up the camera
+            camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+            camera.position.z = 4;
+
+            // Set up the scene
+            scene = new THREE.Scene();
+
+            // Add the axes A, B, and C
+            axesA = new THREE.AxesHelper(1);
+            axesB = new THREE.AxesHelper(1);
+            axesC = new THREE.AxesHelper(1);
+        scene.add(axesA);
+        scene.add(axesB);
+        scene.add(axesC);
+
+        // Set up the renderer
+        renderer = new THREE.WebGLRenderer();
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        document.body.appendChild(renderer.domElement);
+
+        // Add orbit controls for the camera
+        orbitControls = new THREE.OrbitControls(camera, renderer.domElement);
+
+        // Update the axes when the sliders are moved
+        document.getElementById('roll_AB').addEventListener('input', updateAxes);
+        document.getElementById('pitch_AB').addEventListener('input', updateAxes);
+        document.getElementById('yaw_AB').addEventListener('input', updateAxes);
+        document.getElementById('roll_BC').addEventListener('input', updateAxes);
+        document.getElementById('pitch_BC').addEventListener('input', updateAxes);
+        document.getElementById('yaw_BC').addEventListener('input', updateAxes);
+
+        // Initial update of the plot
+        updateAxes();
+
+        // Render the scene
+        animate();
+    }
+
+    function animate() {
+        requestAnimationFrame(animate);
+        renderer.render(scene, camera);
+    }
+
+    function updateAxes() {
+        // Get the rotation angles between A and B, and between B and C
+        const roll_AB = document.getElementById('roll_AB').value;
+        const pitch_AB = document.getElementById('pitch_AB').value;
+        const yaw_AB = document.getElementById('yaw_AB').value;
+        const roll_BC = document.getElementById('roll_BC').value;
+        const pitch_BC = document.getElementById('pitch_BC').value;
+        const yaw_BC = document.getElementById('yaw_BC').value;
+              // Update angle values displayed on the page
+        document.getElementById('angleValues_AB').innerText = `Roll A to B: ${roll_AB}°, Pitch A to B: ${pitch_AB}°, Yaw A to B: ${yaw_AB}°`;
+        document.getElementById('angleValues_BC').innerText = `Roll B to C: ${roll_BC}°, Pitch B to C: ${pitch_BC}°, Yaw B to C: ${yaw_BC}°`;
+
+        // Create rotation matrices for A to B and B to C
+        const rotationMatrix_AB = new THREE.Matrix4().makeRotationFromEuler(new THREE.Euler(THREE.Math.degToRad(pitch_AB), THREE.Math.degToRad(yaw_AB), THREE.Math.degToRad(roll_AB), 'ZYX'));
+        const rotationMatrix_BC = new THREE.Matrix4().makeRotationFromEuler(new THREE.Euler(THREE.Math.degToRad(pitch_BC), THREE.Math.degToRad(yaw_BC), THREE.Math.degToRad(roll_BC), 'ZYX'));
+
+        // Apply the rotations to the axes
+        axesB.position.copy(axesA.position);
+        axesB.setRotationFromMatrix(rotationMatrix_AB);
+        axesC.position.copy(axesB.position);
+        axesC.setRotationFromMatrix(new THREE.Matrix4().multiplyMatrices(rotationMatrix_AB, rotationMatrix_BC));
+
+        // Display the rotation matrices on the page
+        document.getElementById('rotationMatrix_AB').innerText = matrixToString(rotationMatrix_AB);
+        document.getElementById('rotationMatrix_BC').innerText = matrixToString(rotationMatrix_BC);
+    }
+
+    function matrixToString(matrix) {
+        let result = '';
+        for (let i = 0; i < 4; i++) {
+            for (let j = 0; j < 4; j++) {
+                result += matrix.elements[j * 4 + i].toFixed(2) + '\t';
+            }
+            result += '\n';
+        }
+        return result;
+    }
+
+    // Handle window resizing
+    function onWindowResize() {
+        camera.aspect = window.innerWidth / window.innerHeight;
+        camera.updateProjectionMatrix();
+        renderer.setSize(window.innerWidth, window.innerHeight);
+    }
+    window.addEventListener('resize', onWindowResize);
+
+    // Initialize the visualization
+    init();
+
+</script>
+</body>
+</html>
+
