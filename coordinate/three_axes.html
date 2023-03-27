@@ -30,7 +30,7 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/dat-gui/0.7.7/dat.gui.min.js"></script>
     <script>
-        let camera, scene, renderer, axesA, axesB, axesC, orbitControls;
+        let camera, scene, renderer, axesA, axesB, axesC;
 
         function init() {
             // Set up the camera
@@ -44,17 +44,16 @@
             axesA = new THREE.AxesHelper(1);
             axesB = new THREE.AxesHelper(1);
             axesC = new THREE.AxesHelper(1);
-        scene.add(axesA);
-        scene.add(axesB);
-        scene.add(axesC);
+            scene.add(axesA);
+            scene.add(axesB);
+            scene.add(axesC);
 
-        // Set up the renderer
-        renderer = new THREE.WebGLRenderer();
+                            // Set up the renderer
+            renderer = new THREE.WebGLRenderer();
         renderer.setSize(window.innerWidth, window.innerHeight);
         document.body.appendChild(renderer.domElement);
 
         // Add orbit controls for the camera
-        orbitControls = new THREE.OrbitControls(camera, renderer.domElement);
 
         // Update the axes when the sliders are moved
         document.getElementById('roll_AB').addEventListener('input', updateAxes);
@@ -91,12 +90,14 @@
         // Create rotation matrices for A to B and B to C
         const rotationMatrix_AB = new THREE.Matrix4().makeRotationFromEuler(new THREE.Euler(THREE.Math.degToRad(pitch_AB), THREE.Math.degToRad(yaw_AB), THREE.Math.degToRad(roll_AB), 'ZYX'));
         const rotationMatrix_BC = new THREE.Matrix4().makeRotationFromEuler(new THREE.Euler(THREE.Math.degToRad(pitch_BC), THREE.Math.degToRad(yaw_BC), THREE.Math.degToRad(roll_BC), 'ZYX'));
-
+        
+        const euler_AB = new THREE.Euler(THREE.MathUtils.degToRad(roll_AB), THREE.MathUtils.degToRad(pitch_AB), THREE.MathUtils.degToRad(yaw_AB), 'ZYX');
+        const euler_BC = new THREE.Euler(THREE.MathUtils.degToRad(roll_BC), THREE.MathUtils.degToRad(pitch_BC), THREE.MathUtils.degToRad(yaw_BC), 'ZYX');
         // Apply the rotations to the axes
-        axesB.position.copy(axesA.position);
-        axesB.setRotationFromMatrix(rotationMatrix_AB);
-        axesC.position.copy(axesB.position);
-        axesC.setRotationFromMatrix(new THREE.Matrix4().multiplyMatrices(rotationMatrix_AB, rotationMatrix_BC));
+        axesB.copy(axesA);
+        axesB.setRotationFromEuler(euler_AB);
+        axesC.copy(axesB);
+        axesC.setRotationFromEuler(euler_BC);
 
         // Display the rotation matrices on the page
         document.getElementById('rotationMatrix_AB').innerText = matrixToString(rotationMatrix_AB);
